@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: restaurant_app
+    volumes:
+      - .:/var/www
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    networks:
+      - restaurant_network
+
+  db:
+    image: postgres:15
+    container_name: restaurant_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: RESTAURANTDB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SG_38@pgsql
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    networks:
+      - restaurant_network
+
+volumes:
+  dbdata:
+
+networks:
+  restaurant_network:
