@@ -22,3 +22,9 @@ Content-Type: application/json
      "username": "test@example.com",
     "password": "password123"
 }
+
+### Logout User
+POST {{host}}/api/logout
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer 8|5PZkSA0UzhUBudpC63jVttuXhaUvsXPMVDjDjwyv44743be0

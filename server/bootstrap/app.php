@@ -14,7 +14,22 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        
+    // 1. Enables Sanctum's ability to guard API routes using Cookies/CSRF
+        $middleware->statefulApi();
+        
+        // 2. We keep this empty. 
+        // Your Next.js app should fetch the CSRF cookie before posting to login/register.
+        $middleware->validateCsrfTokens(
+            except: [
+                // 'api/login', 
+                // 'api/register'
+                ]
+        );
+
+        $middleware->api(prepend: [
+            \App\Http\Middleware\AppendJwtFromCookie::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         

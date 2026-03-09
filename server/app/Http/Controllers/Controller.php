@@ -17,4 +17,21 @@ abstract class Controller
             'data'    => $data,
         ], $code);
     }
+
+    /**
+     * Standard API Error Response
+     */
+    public function sendError(string $error, array $errorMessages = [], int $code = 404): JsonResponse
+    {
+        $response = [
+            'status'  => 'error',
+            'message' => $error,
+        ];
+
+        if (!empty($errorMessages)) {
+            $response['errors'] = $errorMessages;
+        }
+
+        return response()->json($response, $code);
+    }
 }

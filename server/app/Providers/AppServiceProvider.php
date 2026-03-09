@@ -11,17 +11,26 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //Bind Repositories to interfaces
+        // Bind Repositories to interfaces
         $this->app->bind(
-            \App\Contracts\Interfaces\IAuthRepo::class,
-            \App\Contracts\Implementation\AuthRepo::class
+            \App\Repositories\Auth\AuthRepositoryInterface::class,
+            \App\Repositories\Auth\EloquentAuthRepository::class
         );
 
-
-        //Bind Services to interfaces
         $this->app->bind(
-            \App\Services\Interfaces\IAuthService::class,
-            \App\Services\Implementation\AuthService::class
+            \App\Repositories\User\UserRepositoryInterface::class,
+            \App\Repositories\User\EloquentUserRepository::class
+        );
+
+        // Bind Services to interfaces
+        $this->app->bind(
+            \App\Services\Auth\AuthServiceInterface::class,
+            \App\Services\Auth\AuthService::class
+        );
+
+        $this->app->bind(
+            \App\Services\User\UserServiceInterface::class,
+            \App\Services\User\UserService::class
         );
     }
 

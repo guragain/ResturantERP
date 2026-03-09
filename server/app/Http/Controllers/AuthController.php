@@ -5,86 +5,55 @@ namespace App\Http\Controllers;
 use App\DTOs\UserLoginDTO;
 use App\DTOs\UserRegistrationDTO;
 use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\Request;
-use App\Services\Interfaces\IAuthService;
-use Illuminate\Http\JsonResponse;
 use App\Http\Requests\RegisterRequest;
+use App\Services\Auth\AuthServiceInterface;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-    protected IAuthService $authService;
+    protected AuthServiceInterface $authService;
 
-    public function __construct(IAuthService $authService)
+    public function __construct(AuthServiceInterface $authService)
     {
         $this->authService = $authService;
     }
 
-
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
     public function register(RegisterRequest $request): JsonResponse
     {
-        // Now $request is an instance of RegisterRequest,
-        // and the DTO will accept it without a TypeError.
         $dto = UserRegistrationDTO::fromRequest($request);
+        $result = $this->authService->register($dto);
 
-        $user = $this->authService->register($dto);
+        $cookie = cookie('jwt_token', $result->token, 1440, '/', null, env('SESSION_SECURE_COOKIE', true), true, false, 'Lax');
 
-        return response()->json([
-            'message' => 'User registered successfully',
-            'user'    => $user
-        ], 201);
+        return $this->sendResponse([
+            'user'  => $result->user,
+        ], 'User registered successfully', 201)->withCookie($cookie);
     }
 
-    public function  login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'username' => 'required',
-            'password' => 'required'
-        ]);
-        $dto = UserLoginDTO::fromRequest($request);
-        $user = $this->authService->login($dto);
-       return response()->json([
-            'message' => 'User logged in successfully',
-            'user'    => $user
-        ], 200);
+        try {
+            $dto = UserLoginDTO::fromRequest($request);
+            $result = $this->authService->login($dto);
+
+            $cookie = cookie('jwt_token', $result->token, 1440, '/', null, env('SESSION_SECURE_COOKIE', true), true, false, 'Lax');
+
+            return $this->sendResponse([
+                'user'  => $result->user,
+                'token' => $result->token,
+            ], 'User logged in successfully')->withCookie($cookie);
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), [], $e->getCode() ?: 401);
+        }
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $this->authService->logout($request->user());
+
+        $cookie = cookie()->forget('jwt_token');
+
+        return $this->sendResponse(null, 'User logged out successfully')->withCookie($cookie);
     }
 }
