@@ -28,7 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->api(prepend: [
-            \App\Http\Middleware\AppendJwtFromCookie::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

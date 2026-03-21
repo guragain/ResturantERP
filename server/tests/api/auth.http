@@ -5,12 +5,13 @@ POST {{host}}/api/register
 Accept: application/json
 Content-Type: application/json
 
-{
-    "name": "Test User",
-    "email": "test@example.com",
-    "password": "password123",
-    "password_confirmation": "password123"
-}
+{"first_name":"Saroj","last_name":"Guragain","middle_name":"","email":"guragainsaroj40@gmail.com","password":"password","password_confirmation":"password","role":"Admin","status":"Active"}
+### {
+#     "name": "Test User",
+#     "email": "test@example.com",
+#     "password": "password123",
+#     "password_confirmation": "password123"
+# }
 
 
 ### Login User
@@ -19,8 +20,10 @@ Accept: application/json
 Content-Type: application/json
 
 {
-     "username": "test@example.com",
-    "password": "password123"
+    //"username": "guragainsaroj40@gmail.com",
+     "email": "admin@jhyomo.com",
+     "password": "password",
+     "remember":true
 }
 
 ### Logout User
@@ -28,3 +31,8 @@ POST {{host}}/api/logout
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer 8|5PZkSA0UzhUBudpC63jVttuXhaUvsXPMVDjDjwyv44743be0
+
+#### Get Authenticated User
+GET {{host}}/api/users
+Accept: application/json
+Authorization: Bearer 30|7MzMdNyFb64pGxof0i1E8AKkxKKw6omXzlEXgMcVbc23b475

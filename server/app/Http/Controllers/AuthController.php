@@ -2,58 +2,92 @@
 
 namespace App\Http\Controllers;
 
-use App\DTOs\UserLoginDTO;
-use App\DTOs\UserRegistrationDTO;
-use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
-use App\Services\Auth\AuthServiceInterface;
+use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-    protected AuthServiceInterface $authService;
+    public function __construct(
+        private AuthService $authService
+    ) {}
 
-    public function __construct(AuthServiceInterface $authService)
-    {
-        $this->authService = $authService;
-    }
-
+    /**
+     * Register a new user
+     */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $dto = UserRegistrationDTO::fromRequest($request);
-        $result = $this->authService->register($dto);
-
-        $cookie = cookie('jwt_token', $result->token, 1440, '/', null, env('SESSION_SECURE_COOKIE', true), true, false, 'Lax');
-
-        return $this->sendResponse([
-            'user'  => $result->user,
-        ], 'User registered successfully', 201)->withCookie($cookie);
-    }
-
-    public function login(LoginRequest $request): JsonResponse
-    {
         try {
-            $dto = UserLoginDTO::fromRequest($request);
-            $result = $this->authService->login($dto);
-
-            $cookie = cookie('jwt_token', $result->token, 1440, '/', null, env('SESSION_SECURE_COOKIE', true), true, false, 'Lax');
-
-            return $this->sendResponse([
-                'user'  => $result->user,
-                'token' => $result->token,
-            ], 'User logged in successfully')->withCookie($cookie);
+            $result = $this->authService->register($request->validated());
+            
+            return response()->json($result->toArray(), 201);
         } catch (\Exception $e) {
-            return $this->sendError($e->getMessage(), [], $e->getCode() ?: 401);
+            return response()->json([
+                'message' => 'Registration failed',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
+    /**
+     * Login user
+     */
+    public function login(LoginRequest $request): JsonResponse
+    {
+        try {
+            $result = $this->authService->login($request->validated());
+            
+            return response()->json($result->toArray());
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Login failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Login failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Logout user
+     */
     public function logout(Request $request): JsonResponse
     {
-        $this->authService->logout($request->user());
+        try {
+            $this->authService->logout();
+            
+            return response()->json([
+                'message' => 'Logged out successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Logout failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
-        $cookie = cookie()->forget('jwt_token');
-
-        return $this->sendResponse(null, 'User logged out successfully')->withCookie($cookie);
+    /**
+     * Get authenticated user
+     */
+    public function user(Request $request): JsonResponse
+    {
+        $user = $this->authService->getAuthenticatedUser();
+        
+        if (!$user) {
+            return response()->json([
+                'message' => 'Not authenticated'
+            ], 401);
+        }
+        
+        return response()->json([
+            'user' => $user->toArray()
+        ]);
     }
 }
